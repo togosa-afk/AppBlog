@@ -1,0 +1,13 @@
+POST http://localhost:3003/api/blogs
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Im1vaGFAMSIsImlkIjoiNjlmYjRjNmQ3YzJiNjgzNTRkYjgxNWVhIiwiaWF0IjoxNzc4MDc2ODc5LCJleHAiOjE3NzgwODA0Nzl9.6CiMpEDHREcuwGHxtkdU2EWmPZe0NOLLQ7hEyQo7RzY
+
+{
+    "title": "blog 1",
+    "author": "moha",
+    "url": "www.blog1.com",
+    "likes": 5
+}
+
+###
+GET http://localhost:3003/api/blogs
