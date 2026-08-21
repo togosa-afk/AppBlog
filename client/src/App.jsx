@@ -6,22 +6,21 @@ import LoginForm from './components/LoginForm'
 import Blog from './components/Blog'
 import CreateBlogForm from './components/CreateBlogForm'
 import './index.css'
+import NotFound from './components/NotFound'
 
-import {Typography, AppBar, Toolbar, Button} from '@mui/material'
+import { ErrorBoundary } from 'react-error-boundary'
 
-// services 
+import { Typography, AppBar, Toolbar, Button } from '@mui/material'
+
+// services
 import blogService from './services/blogs'
 const App = () => {
-
   const [blogs, setBlogs] = useState([])
   const [user, setUser] = useState(null)
 
   useEffect(() => {
-    blogService.getAll().then(blogs =>
-      setBlogs( blogs )
-    )  
+    blogService.getAll().then((blogs) => setBlogs(blogs))
   }, [])
-
 
   useEffect(() => {
     const loggedUserJSON = window.localStorage.getItem('loggedBlogAppUser')
@@ -32,15 +31,12 @@ const App = () => {
     }
   }, [])
 
-
   //! handel logout
   const handleLogout = () => {
     window.localStorage.removeItem('loggedBlogAppUser')
     blogService.setToken(null)
     setUser(null)
   }
-
-
 
   // add Blog function
   const createBlog = async (blogObj) => {
@@ -51,7 +47,6 @@ const App = () => {
       console.error('Blog creation failed:', error)
     }
   }
-
 
   return (
     <>
@@ -81,25 +76,37 @@ const App = () => {
         </Toolbar>
       </AppBar>
 
-      <Routes>
-        <Route path='/' element={
-          <BlogList blogs={blogs} user={user} handleLogout={handleLogout} />
-        } />
+      <ErrorBoundary fallback={<h2>Something went wrong :( </h2>}>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <BlogList blogs={blogs} user={user} handleLogout={handleLogout} />
+            }
+          />
 
-        <Route path='blogs/:id' element={
-          <Blog blogs={blogs} setBlogs={setBlogs} user={user}  />
-        } />
+          <Route
+            path="blogs/:id"
+            element={<Blog blogs={blogs} setBlogs={setBlogs} user={user} />}
+          />
 
-        <Route path='/create' element={
-          <CreateBlogForm user={user} blogs={blogs} setBlogs={setBlogs} createBlog={createBlog} />
-        } />
+          <Route
+            path="/create"
+            element={
+              <CreateBlogForm
+                user={user}
+                blogs={blogs}
+                setBlogs={setBlogs}
+                createBlog={createBlog}
+              />
+            }
+          />
 
+          <Route path="/login" element={<LoginForm setUser={setUser} />} />
 
-        <Route path='/login' element={
-          <LoginForm setUser={setUser} />
-        } />
-      </Routes>
-
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </ErrorBoundary>
     </>
   )
 }

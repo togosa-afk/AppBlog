@@ -10,7 +10,7 @@ vi.mock('react-router-dom', async () => {
   return {
     ...actual,
     useParams: () => ({ id: 'blog1' }),
-    useNavigate: () => vi.fn()
+    useNavigate: () => vi.fn(),
   }
 })
 
@@ -18,8 +18,8 @@ vi.mock('../services/blogs', () => ({
   default: {
     update: vi.fn().mockResolvedValue({}),
     remove: vi.fn().mockResolvedValue({}),
-    setToken: vi.fn()
-  }
+    setToken: vi.fn(),
+  },
 }))
 
 describe('<Blog /> Single Blog View Tests', () => {
@@ -34,8 +34,8 @@ describe('<Blog /> Single Blog View Tests', () => {
       likes: 42,
       user: {
         id: 'user1',
-        name: 'Gaza Developer'
-      }
+        name: 'Gaza Developer',
+      },
     }
 
     mockBlogs = [blog]
@@ -74,7 +74,7 @@ describe('<Blog /> Single Blog View Tests', () => {
   test('Authenticated non-creator users see only the like button', async () => {
     const user = {
       id: 'user2', // Different from blog creator
-      name: 'Another User'
+      name: 'Another User',
     }
 
     render(
@@ -105,7 +105,7 @@ describe('<Blog /> Single Blog View Tests', () => {
   test('Blog creator sees both like and delete buttons', async () => {
     const user = {
       id: 'user1', // Same as blog creator
-      name: 'Gaza Developer'
+      name: 'Gaza Developer',
     }
 
     render(
@@ -131,7 +131,7 @@ describe('<Blog /> Single Blog View Tests', () => {
   test('Like button updates likes for authenticated user', async () => {
     const user = {
       id: 'user2',
-      name: 'Another User'
+      name: 'Another User',
     }
 
     const setupUser = userEvent.setup()
@@ -158,7 +158,7 @@ describe('<Blog /> Single Blog View Tests', () => {
   test('Delete button removes blog for creator', async () => {
     const user = {
       id: 'user1', // Creator
-      name: 'Gaza Developer'
+      name: 'Gaza Developer',
     }
 
     const setupUser = userEvent.setup()
