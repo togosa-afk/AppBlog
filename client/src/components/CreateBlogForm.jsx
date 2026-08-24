@@ -1,16 +1,16 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useBlogActions } from '../store/blogStore'
 
 import Notification from './Notification'
 import { TextField, Button } from '@mui/material'
 
-const CreateBlogForm = ({ createBlog, blogs, setBlogs, user }) => {
-  const [message, setMessage] = useState('')
-  const [type, setType] = useState('')
+const CreateBlogForm = () => {
   const [title, setTitle] = useState('')
   const [author, setAuthor] = useState('')
   const [url, setUrl] = useState('')
   const navigate = useNavigate()
+  const { addBlog } = useBlogActions()
 
   const onChange = (event) => {
     const { id, value } = event.target
@@ -36,22 +36,16 @@ const CreateBlogForm = ({ createBlog, blogs, setBlogs, user }) => {
       author: author,
       url: url,
     }
-    await createBlog(newObject)
+    await addBlog(newObject)
     navigate('/')
-    setMessage('Blog created successfully')
-    setType('success')
     setTitle('')
     setAuthor('')
     setUrl('')
-    setTimeout(() => {
-      setMessage('')
-      setType('')
-    }, 5000)
   }
 
   return (
     <>
-      <Notification message={message} type={type} />
+      <Notification />
       <h2>Create new blog</h2>
       <form onSubmit={handelCreateBlog}>
         <div className="title">

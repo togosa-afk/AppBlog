@@ -1,27 +1,27 @@
 import { useNavigate, Link } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
+import { useBlogs } from '../store/blogStore'
+import { useUser, useUserInitialized } from '../store/userStore'
 
 // Components
-import Blog from './Blog'
 import Notification from './Notification'
 import '../index.css'
-// services
-import blogService from '../services/blogs'
+const BlogList = () => {
+  const blogs = useBlogs()
+  const user = useUser()
+  const userInitialized = useUserInitialized()
 
-const BlogList = ({ blogs, user, handleLogout }) => {
-  const [message, setMessage] = useState(null)
-  const [type, setType] = useState('')
   const SortedBlog = [...blogs].sort((a, b) => b.likes - a.likes)
 
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (!user) {
+    if (userInitialized && !user) {
       navigate('/login')
     }
-  }, [user, navigate])
+  }, [user, userInitialized, navigate])
 
-  if (!user) {
+  if (!userInitialized || !user) {
     return <div>Loading...</div>
   }
   // Ensure the owner of the blog or not
@@ -38,7 +38,7 @@ const BlogList = ({ blogs, user, handleLogout }) => {
   return (
     <>
       <h2>blogs</h2>
-      <Notification message={message} type={type} />
+      <Notification />
       <p>{user.name} is logged in</p>
       <ul>
         {SortedBlog.map((blog) => (
@@ -46,7 +46,7 @@ const BlogList = ({ blogs, user, handleLogout }) => {
             key={blog.id || blog._id}
             onClick={() => navigate(`/blogs/${blog.id || blog._id}`)}
           >
-            <Link>
+            <Link to={`/blogs/${blog.id || blog._id}`}>
               <h3>{blog.title}</h3>
             </Link>
           </li>

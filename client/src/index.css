@@ -1,3 +1,51 @@
+.app-content {
+  width: 100%;
+  min-height: calc(100vh - 64px);
+  box-sizing: border-box;
+  padding: 0 16px;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.app-content > * {
+  width: 100%;
+}
+
+.app-content > .MuiPaper-root {
+  width: min(100%, 700px);
+  margin: 32px auto;
+}
+
+.app-content form {
+  width: min(100%, 520px);
+  margin: 0 auto;
+  text-align: center;
+}
+
+.app-content form > div {
+  display: flex;
+  justify-content: center;
+
+}
+
+.app-content form .MuiTextField-root {
+  width: 100%;
+}
+
+.app-content ul {
+  width: min(100%, 700px);
+  margin: 0 auto;
+  padding-left: 24px;
+}
+
+.app-content > h1,
+.app-content > h2,
+.app-content > h3,
+.app-content > p {
+  text-align: center;
+}
+
 .error {
   color: red;
   background: lightgrey;

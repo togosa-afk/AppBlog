@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import Blog from './Blog'
 import userEvent from '@testing-library/user-event'
 import { BrowserRouter } from 'react-router-dom'
-import * as blogService from '../services/blogs'
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom')

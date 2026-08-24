@@ -1,37 +1,28 @@
 import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 
-import loginService from '../services/login'
-import blogService from '../services/blogs'
 import Notification from './Notification'
+import { useActions } from '../store/userStore'
 
 import { TextField, Button } from '@mui/material'
 
-const LoginForm = ({ setUser }) => {
+const LoginForm = () => {
   const [userName, setUserName] = useState('')
   const [password, setPassword] = useState('')
-  const [message, setMessage] = useState(null)
-  const [type, setType] = useState('')
+  const { login } = useActions()
 
   const navigate = useNavigate()
 
   const handleLogin = async (event) => {
     event.preventDefault()
     try {
-      const user = await loginService.login({ userName, password })
-      window.localStorage.setItem('loggedBlogAppUser', JSON.stringify(user))
-      blogService.setToken(user.token)
-      setUser(user)
+      const credentials = { userName, password }
+      await login(credentials)
       navigate('/')
       setPassword('')
       setUserName('')
     } catch (error) {
-      // console.log('Login failed:', error.response?.data || error.message)
-      setType('error')
-      setMessage('wrong credentials')
-      setTimeout(() => {
-        setMessage(null)
-      }, 5000)
+      // setError(error.response?.data?.error || 'wrong credentials')
     }
   }
 
@@ -50,7 +41,7 @@ const LoginForm = ({ setUser }) => {
   // throw new Error('خازوق تجريبي لاختبار الـ Error Boundary!')
   return (
     <>
-      <Notification message={message} type={type} />
+      {/* <Notification /> */}
       <h1>Login to application</h1>
       <form onSubmit={handleLogin}>
         <div>

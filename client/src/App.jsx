@@ -1,52 +1,35 @@
-import { useState, useEffect } from 'react'
-import { Routes, Route, Link, useMatch } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Routes, Route, Link } from 'react-router-dom'
 // Components
 import BlogList from './components/BlogList'
 import LoginForm from './components/LoginForm'
 import Blog from './components/Blog'
 import CreateBlogForm from './components/CreateBlogForm'
+import IndividualUserView from './components/IndividualUserView'
 import './index.css'
 import NotFound from './components/NotFound'
+import Users from './components/Users'
+
+//! Stores
+import { useActions, useUser } from './store/userStore'
+import { useBlogActions } from './store/blogStore'
 
 import { ErrorBoundary } from 'react-error-boundary'
 
 import { Typography, AppBar, Toolbar, Button } from '@mui/material'
 
-// services
-import blogService from './services/blogs'
 const App = () => {
-  const [blogs, setBlogs] = useState([])
-  const [user, setUser] = useState(null)
+  const user = useUser()
+  const { initUser, logout } = useActions()
+  const { initialize: initializeBlogs } = useBlogActions()
 
   useEffect(() => {
-    blogService.getAll().then((blogs) => setBlogs(blogs))
-  }, [])
+    initUser()
+  }, [initUser])
 
   useEffect(() => {
-    const loggedUserJSON = window.localStorage.getItem('loggedBlogAppUser')
-    if (loggedUserJSON) {
-      const user = JSON.parse(loggedUserJSON)
-      setUser(user)
-      blogService.setToken(user.token)
-    }
-  }, [])
-
-  //! handel logout
-  const handleLogout = () => {
-    window.localStorage.removeItem('loggedBlogAppUser')
-    blogService.setToken(null)
-    setUser(null)
-  }
-
-  // add Blog function
-  const createBlog = async (blogObj) => {
-    try {
-      const blog = await blogService.create(blogObj)
-      setBlogs(blogs.concat(blog))
-    } catch (error) {
-      console.error('Blog creation failed:', error)
-    }
-  }
+    initializeBlogs()
+  }, [initializeBlogs])
 
   return (
     <>
@@ -61,10 +44,13 @@ const App = () => {
 
           {user ? (
             <>
+              <Button color="inherit" component={Link} to="/users">
+                Users
+              </Button>
               <Button color="inherit" component={Link} to="/create">
                 new blog
               </Button>
-              <Button color="inherit" onClick={handleLogout}>
+              <Button color="inherit" onClick={logout}>
                 logout
               </Button>
             </>
@@ -77,35 +63,23 @@ const App = () => {
       </AppBar>
 
       <ErrorBoundary fallback={<h2>Something went wrong :( </h2>}>
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <BlogList blogs={blogs} user={user} handleLogout={handleLogout} />
-            }
-          />
+        <main className="app-content">
+          <Routes>
+            <Route path="/" element={<BlogList />} />
 
-          <Route
-            path="blogs/:id"
-            element={<Blog blogs={blogs} setBlogs={setBlogs} user={user} />}
-          />
+            <Route path="blogs/:id" element={<Blog />} />
 
-          <Route
-            path="/create"
-            element={
-              <CreateBlogForm
-                user={user}
-                blogs={blogs}
-                setBlogs={setBlogs}
-                createBlog={createBlog}
-              />
-            }
-          />
+            <Route path="/create" element={<CreateBlogForm />} />
 
-          <Route path="/login" element={<LoginForm setUser={setUser} />} />
+            <Route path="/login" element={<LoginForm />} />
 
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+            <Route path="/users" element={<Users />} />
+
+            <Route path="/users/:id" element={<IndividualUserView />} />
+
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </main>
       </ErrorBoundary>
     </>
   )
