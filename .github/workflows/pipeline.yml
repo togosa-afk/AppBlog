@@ -26,6 +26,8 @@ jobs:
         run: npm run lint
 
       - name: Run Test
+        env:
+          TEST_MONGODB_URI: ${{ secrets.TEST_MONGODB_URI }}
         run: npm run test
 
       - name: Build
