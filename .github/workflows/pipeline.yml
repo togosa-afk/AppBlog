@@ -18,7 +18,10 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm install
+        run: |
+          npm ci
+          npm ci --prefix client
+          npm ci --prefix server
 
       - name: Check style
         run: npm run lint
@@ -72,9 +75,9 @@ jobs:
         if: ${{ needs.build_and_test.result == 'success' && (needs.deploy.result == 'success' || needs.deploy.result == 'skipped') }}
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK }}
-          status: "Success"
-          title: "Deployment Successful! 🚀"
-          description: "New version deployed to Render by ${{ github.actor }}."
+          status: 'Success'
+          title: 'Deployment Successful! 🚀'
+          description: 'New version deployed to Render by ${{ github.actor }}.'
           color: 0x00ff00
 
       - name: Notify Discord on Failure
@@ -82,7 +85,7 @@ jobs:
         if: ${{ needs.build_and_test.result == 'failure' || needs.deploy.result == 'failure' }}
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK }}
-          status: "Failure"
-          title: "Pipeline Failed! 💥"
+          status: 'Failure'
+          title: 'Pipeline Failed! 💥'
           description: "Commit '${{ github.event.head_commit.message }}' broke the build."
           color: 0xff0000
