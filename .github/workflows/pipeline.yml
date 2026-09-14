@@ -1,0 +1,88 @@
+name: Deployment pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize]
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Check style
+        run: npm run eslint
+
+      - name: Run Test
+        run: npm run test
+
+      - name: Build
+        run: npm run build
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+  deploy:
+    needs: [build_and_test]
+    if: ${{ github.event_name == 'push' && !contains(join(github.event.commits.*.message, ' '), '#skip') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger deployment on Render
+        run: curl ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+
+  tag_release:
+    needs: [deploy]
+    if: ${{ github.event_name == 'push' && !contains(join(github.event.commits.*.message, ' '), '#skip') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bump version and push tag
+        uses: anothrNick/github-tag-action@1.75.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEFAULT_BUMP: patch
+
+  notify_discord:
+    needs: [build_and_test, deploy, tag_release]
+    if: ${{ always() && github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Discord on Success
+        uses: sarisia/actions-status-discord@v1
+        if: ${{ needs.build_and_test.result == 'success' && (needs.deploy.result == 'success' || needs.deploy.result == 'skipped') }}
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          status: "Success"
+          title: "Deployment Successful! 🚀"
+          description: "New version deployed to Render by ${{ github.actor }}."
+          color: 0x00ff00
+
+      - name: Notify Discord on Failure
+        uses: sarisia/actions-status-discord@v1
+        if: ${{ needs.build_and_test.result == 'failure' || needs.deploy.result == 'failure' }}
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          status: "Failure"
+          title: "Pipeline Failed! 💥"
+          description: "Commit '${{ github.event.head_commit.message }}' broke the build."
+          color: 0xff0000

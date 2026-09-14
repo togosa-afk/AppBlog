@@ -69,7 +69,7 @@ plogRout.delete('/:id', async (request, response) => {
 })
 
 
-plogRout.put('/:id', async (request, response, next) => {
+plogRout.put('/:id', async (request, response) => {
   const { likes } = request.body
   const blog = await Blog.findById(request.params.id)
   if (!blog) {

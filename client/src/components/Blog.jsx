@@ -31,7 +31,8 @@ const Blog = () => {
     const blogUserName = blog.user?.userName || blog.user?.username
     const userId = user.id || user._id
     return (
-      String(blogUserId) === String(userId) || blogUserName === user.userName
+      String(blogUserId) === String(userId) ||
+      (blogUserName && user.userName && blogUserName === user.userName)
     )
   }
 

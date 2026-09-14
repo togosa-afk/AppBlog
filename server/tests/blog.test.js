@@ -1,17 +1,28 @@
-const { describe, test, after, before, beforeEach } = require('node:test')
-const mongoose = require('mongoose')
+const { describe, test, beforeEach } = require('node:test')
 const supertest = require('supertest')
 const assert = require('node:assert')
+const jwt = require('jsonwebtoken')
 const Blog = require('../models/blog')
+const User = require('../models/user')
 const helper = require('./test_helper')
 const app = require('../app')
 
 const api = supertest(app)
 
 describe('when there is initially some blogs', () => {
+    let authorization
+
     beforeEach(async () => {
+        await User.deleteMany({})
         await Blog.deleteMany({})
         await Blog.insertMany(helper.initialBlogs)
+
+        const user = await User.create({
+            userName: 'testuser',
+            name: 'Test User',
+            passwordHash: 'test-password-hash'
+        })
+        authorization = `Bearer ${jwt.sign({ id: user._id }, process.env.SECRET)}`
     })
 
 
@@ -30,12 +41,12 @@ describe('when there is initially some blogs', () => {
 
     const newBlog = {
         title: 'test',
-        author: 'Mohammd',
+        author: 'Mohammed',
         url: 'http://blog.cleancoder.com/test',
         likes: 1
     }
 
-    await api.post('/api/blogs').send(newBlog).expect(201).expect('Content-Type', /application\/json/)
+    await api.post('/api/blogs').set('Authorization', authorization).send(newBlog).expect(201).expect('Content-Type', /application\/json/)
 
     const blogAtEnd = await helper.blogsInDb()
 
@@ -50,16 +61,17 @@ describe('when there is initially some blogs', () => {
 
     test('default value is 0 for undfind likes', async () => {
         const newBlog = {
-            title: 'مدونة بدون لايكات',
+            title: 'Blog without likes',
             author: 'Gaza Developer',
             url: 'https://safecode-lab.blogspot.com'
             // لاحظ: ما في likes هان
         }
 
-        await api.post('/api/blogs').send(newBlog).expect(201).expect('Content-Type', /application\/json/)
+        await api.post('/api/blogs').set('Authorization', authorization).send(newBlog).expect(201).expect('Content-Type', /application\/json/)
 
         const response = await api
             .post('/api/blogs')
+            .set('Authorization', authorization)
             .send(newBlog)
             .expect(201)
             .expect('Content-Type', /application\/json/)
@@ -75,7 +87,7 @@ describe('when there is initially some blogs', () => {
             likes: 4
         }
 
-        await api.post('/api/blogs').send(newBlog).expect(400)
+        await api.post('/api/blogs').set('Authorization', authorization).send(newBlog).expect(400)
 
         const blogsAtEnd = await helper.blogsInDb()
         assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length)
@@ -89,7 +101,7 @@ describe('when there is initially some blogs', () => {
             likes: 4
         }
 
-        await api.post('/api/blogs').send(newBlog).expect(400)
+        await api.post('/api/blogs').set('Authorization', authorization).send(newBlog).expect(400)
 
         const blogsAtEnd = await helper.blogsInDb()
         assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length)
@@ -99,7 +111,7 @@ describe('when there is initially some blogs', () => {
         const blogsAtStart = await helper.blogsInDb()
         const blogToDelete = blogsAtStart[0]
 
-        await api.delete(`/api/blogs/${blogToDelete.id}`).expect(204)
+        await api.delete(`/api/blogs/${blogToDelete.id}`).set('Authorization', authorization).expect(204)
 
         const blogsAtEnd = await helper.blogsInDb()
         assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length - 1)

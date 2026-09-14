@@ -1,5 +1,6 @@
 const express = require('express')
 const mongoose = require('mongoose')
+const path = require('path')
 const config = require('./utils/config')
 const logger = require('./utils/logger')
 const plogRout = require('./controllers/blog')
@@ -25,6 +26,18 @@ if (process.env.NODE_ENV === 'test') {
   app.use('/api/testing', testingRouter)
 }
 
+if (process.env.NODE_ENV === 'production') {
+  const clientDistPath = path.join(__dirname, '../client/dist')
+
+  app.use(express.static(clientDistPath))
+  app.use((request, response, next) => {
+    if (request.method === 'GET' && !request.path.startsWith('/api')) {
+      return response.sendFile(path.join(clientDistPath, 'index.html'))
+    }
+
+    next()
+  })
+}
 
 
 app.use(middleware.unknownEndpoint)

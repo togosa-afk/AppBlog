@@ -3,6 +3,13 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import Blog from './Blog'
 import userEvent from '@testing-library/user-event'
 import { BrowserRouter } from 'react-router-dom'
+import useBlogStore from '../store/blogStore'
+
+const { userState } = vi.hoisted(() => ({ userState: { current: null } }))
+
+vi.mock('../store/userStore', () => ({
+  useUser: () => userState.current,
+}))
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom')
@@ -15,14 +22,16 @@ vi.mock('react-router-dom', async () => {
 
 vi.mock('../services/blogs', () => ({
   default: {
-    update: vi.fn().mockResolvedValue({}),
+    update: vi
+      .fn()
+      .mockImplementation((_id, updatedBlog) => Promise.resolve(updatedBlog)),
     remove: vi.fn().mockResolvedValue({}),
     setToken: vi.fn(),
   },
 }))
 
 describe('<Blog /> Single Blog View Tests', () => {
-  let blog, mockBlogs, mockSetBlogs
+  let blog
 
   beforeEach(() => {
     blog = {
@@ -37,18 +46,16 @@ describe('<Blog /> Single Blog View Tests', () => {
       },
     }
 
-    mockBlogs = [blog]
-    mockSetBlogs = vi.fn()
+    useBlogStore.setState({ blogs: [blog] })
+    userState.current = null
     vi.clearAllMocks()
   })
 
   // Test 1: Unauthenticated users
   test('Unauthenticated users see blog info and likes but no buttons', async () => {
-    const user = null // Not logged in
-
     render(
       <BrowserRouter>
-        <Blog blogs={mockBlogs} setBlogs={mockSetBlogs} user={user} />
+        <Blog />
       </BrowserRouter>
     )
 
@@ -56,12 +63,6 @@ describe('<Blog /> Single Blog View Tests', () => {
     expect(screen.getByText(/Testing React Apps Made Easy/i)).toBeDefined()
     expect(screen.getByText(/Full Stack Developer/i)).toBeDefined()
 
-    // Click view to see details
-    const viewButton = screen.getByText(/view/i)
-    const setupUser = userEvent.setup()
-    await setupUser.click(viewButton)
-
-    // Should see likes after clicking view
     expect(screen.getByText(/42/)).toBeDefined()
 
     // Should NOT see any action buttons (like, remove)
@@ -75,22 +76,17 @@ describe('<Blog /> Single Blog View Tests', () => {
       id: 'user2', // Different from blog creator
       name: 'Another User',
     }
+    userState.current = user
 
     render(
       <BrowserRouter>
-        <Blog blogs={mockBlogs} setBlogs={mockSetBlogs} user={user} />
+        <Blog />
       </BrowserRouter>
     )
 
     // Should see blog title
     expect(screen.getByText(/Testing React Apps Made Easy/i)).toBeDefined()
 
-    // Click view to see details
-    const viewButton = screen.getByText(/view/i)
-    const setupUser = userEvent.setup()
-    await setupUser.click(viewButton)
-
-    // Should see likes
     expect(screen.getByText(/42/)).toBeDefined()
 
     // Should see like button
@@ -106,20 +102,16 @@ describe('<Blog /> Single Blog View Tests', () => {
       id: 'user1', // Same as blog creator
       name: 'Gaza Developer',
     }
+    userState.current = user
 
     render(
       <BrowserRouter>
-        <Blog blogs={mockBlogs} setBlogs={mockSetBlogs} user={user} />
+        <Blog />
       </BrowserRouter>
     )
 
     // Should see blog title
     expect(screen.getByText(/Testing React Apps Made Easy/i)).toBeDefined()
-
-    // Click view to see details
-    const viewButton = screen.getByText(/view/i)
-    const setupUser = userEvent.setup()
-    await setupUser.click(viewButton)
 
     // Should see both buttons
     expect(screen.getByRole('button', { name: /like/i })).toBeDefined()
@@ -132,25 +124,22 @@ describe('<Blog /> Single Blog View Tests', () => {
       id: 'user2',
       name: 'Another User',
     }
+    userState.current = user
 
     const setupUser = userEvent.setup()
 
     render(
       <BrowserRouter>
-        <Blog blogs={mockBlogs} setBlogs={mockSetBlogs} user={user} />
+        <Blog />
       </BrowserRouter>
     )
-
-    // Click view to show details
-    const viewButton = screen.getByText(/view/i)
-    await setupUser.click(viewButton)
 
     // Click like button
     const likeButton = screen.getByRole('button', { name: /like/i })
     await setupUser.click(likeButton)
 
     // Verify setBlogs was called
-    expect(mockSetBlogs).toHaveBeenCalled()
+    expect(useBlogStore.getState().blogs[0].likes).toBe(43)
   })
 
   // Test 5: Delete button functionality for blog creator
@@ -159,28 +148,20 @@ describe('<Blog /> Single Blog View Tests', () => {
       id: 'user1', // Creator
       name: 'Gaza Developer',
     }
+    userState.current = user
 
     const setupUser = userEvent.setup()
 
     render(
       <BrowserRouter>
-        <Blog blogs={mockBlogs} setBlogs={mockSetBlogs} user={user} />
+        <Blog />
       </BrowserRouter>
     )
-
-    // Click view to show details
-    const viewButton = screen.getByText(/view/i)
-    await setupUser.click(viewButton)
-
-    // Mock window.confirm
-    window.confirm = vi.fn(() => true)
 
     // Click delete button
     const deleteButton = screen.getByRole('button', { name: /remove/i })
     await setupUser.click(deleteButton)
 
-    // Verify functions were called
-    expect(window.confirm).toHaveBeenCalled()
-    expect(mockSetBlogs).toHaveBeenCalled()
+    expect(useBlogStore.getState().blogs).toHaveLength(0)
   })
 })

@@ -2,29 +2,39 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { expect, test, vi } from 'vitest'
 import CreateBlogForm from './CreateBlogForm'
+import { MemoryRouter } from 'react-router-dom'
 
-test('BlogForm testing', async ()=>{
-    const mockHandler = vi.fn()
-    const user = userEvent.setup()
+const { create } = vi.hoisted(() => ({ create: vi.fn() }))
 
-    render(<CreateBlogForm createBlog={mockHandler} />)
+vi.mock('../services/blogs', () => ({
+  default: { create },
+}))
 
-    const titleInput = screen.getByPlaceholderText('write title here')
-    const authorInput = screen.getByPlaceholderText('write author here')
-    const urlInput = screen.getByPlaceholderText('write url here')
-    const createButton = screen.getByText('create')
+test('BlogForm testing', async () => {
+  const user = userEvent.setup()
 
+  render(
+    <MemoryRouter>
+      <CreateBlogForm />
+    </MemoryRouter>
+  )
 
-    await user.type(titleInput, 'title test')
-    await user.type(authorInput, 'author test')
-    await user.type(urlInput, 'url test')
+  const titleInput = screen.getByPlaceholderText('title')
+  const authorInput = screen.getByPlaceholderText('author')
+  const urlInput = screen.getByPlaceholderText('url')
+  const createButton = screen.getByText('create')
 
-    await user.click(createButton)
+  await user.type(titleInput, 'title test')
+  await user.type(authorInput, 'author test')
+  await user.type(urlInput, 'url test')
 
-    expect(mockHandler.mock.calls).toHaveLength(1)
+  await user.click(createButton)
 
-    expect(mockHandler.mock.calls[0][0].title).toBe('title test')
-    expect(mockHandler.mock.calls[0][0].author).toBe('author test')
-    expect(mockHandler.mock.calls[0][0].url).toBe('url test')
+  expect(create).toHaveBeenCalledTimes(1)
 
+  expect(create).toHaveBeenCalledWith({
+    title: 'title test',
+    author: 'author test',
+    url: 'url test',
+  })
 })
