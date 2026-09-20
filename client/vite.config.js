@@ -10,6 +10,12 @@ export default defineConfig({
         target: 'http://localhost:3003',
         changeOrigin: true
       }
+    },
+    host: true,
+   port: 5173,
+    allowedHosts: true,
+    watch: {
+      usePolling: true
     }
   },test: {
     environment: 'jsdom',
