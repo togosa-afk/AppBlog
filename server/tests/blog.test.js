@@ -1,13 +1,18 @@
-const { describe, test, beforeEach } = require('node:test')
+const { describe, test, beforeEach, after } = require('node:test')
 const supertest = require('supertest')
 const assert = require('node:assert')
 const jwt = require('jsonwebtoken')
+const mongoose = require('mongoose')
 const Blog = require('../models/blog')
 const User = require('../models/user')
 const helper = require('./test_helper')
 const app = require('../app')
 
 const api = supertest(app)
+
+after(async () => {
+    await mongoose.disconnect()
+})
 
 describe('when there is initially some blogs', () => {
     let authorization
