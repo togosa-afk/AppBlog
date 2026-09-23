@@ -31,8 +31,12 @@ const BlogList = () => {
       typeof blog.user === 'string'
         ? blog.user
         : blog.user?.id || blog.user?._id
-    const blogUserName = blog.user?.userName || blog.user?.username
-    return blogUserId === user.id || blogUserName === user.userName
+    const blogUserName = blog.user?.username || blog.user?.userName
+    return (
+      blogUserId === user.id ||
+      blogUserName === user.username ||
+      blogUserName === user.userName
+    )
   }
 
   return (

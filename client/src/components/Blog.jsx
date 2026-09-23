@@ -28,11 +28,12 @@ const Blog = () => {
       typeof blog.user === 'string'
         ? blog.user
         : blog.user?.id || blog.user?._id
-    const blogUserName = blog.user?.userName || blog.user?.username
+    const blogUserName = blog.user?.username || blog.user?.userName
     const userId = user.id || user._id
     return (
       String(blogUserId) === String(userId) ||
-      (blogUserName && user.userName && blogUserName === user.userName)
+      (blogUserName &&
+        (blogUserName === user.username || blogUserName === user.userName))
     )
   }
 

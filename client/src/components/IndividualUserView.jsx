@@ -15,7 +15,8 @@ const IndividualUserView = () => {
       typeof blog.user === 'string'
         ? blog.user
         : blog.user?.id || blog.user?._id
-    const blogUserName = blog.user?.userName || blog.author
+    const blogUserName =
+      blog.user?.username || blog.user?.userName || blog.author
 
     return String(blogUserId) === String(id) || blogUserName === id
   })
@@ -32,18 +33,18 @@ const IndividualUserView = () => {
       </Typography>
       <Paper elevation={2}>
         <List disablePadding>
-        {userBlogs.map((blog) => (
-          <ListItem key={blog.id || blog._id} divider>
-            <ListItemText
-              primary={
-                <Link component={Link} to={`/blogs/${blog.id || blog._id}`}>
-                  {blog.title}
-                </Link>
-              }
-              secondary={`${blog.likes} likes`}
-            />
-          </ListItem>
-        ))}
+          {userBlogs.map((blog) => (
+            <ListItem key={blog.id || blog._id} divider>
+              <ListItemText
+                primary={
+                  <Link component={Link} to={`/blogs/${blog.id || blog._id}`}>
+                    {blog.title}
+                  </Link>
+                }
+                secondary={`${blog.likes} likes`}
+              />
+            </ListItem>
+          ))}
         </List>
       </Paper>
     </Container>

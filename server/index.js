@@ -1,5 +1,4 @@
 const express = require('express')
-require('express-async-errors')
 const app = express()
 const { PORT } = require('./utils/config')
 const { connectToDatabase } = require('./utils/db')
@@ -7,12 +6,16 @@ const blogRouter = require('./controllers/blog')
 const usersRouter = require('./controllers/user')
 const authorRoute = require('./controllers/author')
 const loginRoute = require('./controllers/login')
+const logoutRouter = require('./controllers/logout')
+const readingListRouter = require('./controllers/reading_lists')
 
 app.use(express.json())
 app.use('/api/blogs', blogRouter)
 app.use('/api/users', usersRouter)
-app.use('api/author', authorRoute)
+app.use('/api/authors', authorRoute)
 app.use('/api/login', loginRoute)
+app.use('/api/logout', logoutRouter)
+app.use('/api/readinglists', readingListRouter)
 
 const errorHandler = (error, req, res, next) => {
   console.error(error.message)
@@ -48,4 +51,8 @@ const start = async () => {
   })
 }
 
-start()
+if (require.main === module) {
+  start()
+}
+
+module.exports = app

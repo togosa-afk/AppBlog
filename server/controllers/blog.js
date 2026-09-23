@@ -1,24 +1,7 @@
 const router = require('express').Router()
 const { Blog, User } = require('../models')
-const {SECRET} = require('../utils/config')
 const {Op} = require('sequelize')
-const jwt = require('jsonwebtoken')
-
-const tokenExtractor = (req, res, next) => {
-
-  const authorization = req.get('authorization')
-
-  if (authorization && authorization.toLowerCase().startsWith('bearer ')) {
-    try {
-      req.decodedToken = jwt.verify(authorization.substring(7), SECRET)
-    } catch{
-      return res.status(401).json({ error: 'token invalid' })
-    }
-  }  else {
-    return res.status(401).json({ error: 'token missing' })
-  }
-  next()
-}
+const {tokenExtractor} = require('../utils/middleware')
 
 router.get('/', async (req, res) => {
   const where = {}
@@ -38,7 +21,8 @@ router.get('/', async (req, res) => {
     attributes: { exclude: ['userId'] },
     include: {
       model: User,
-      attributes: ['name', 'userName']
+      as: 'user',
+      attributes: ['name', 'username']
     },
     where,
     order:[['likes','DESC']]
@@ -51,6 +35,7 @@ router.post('/',tokenExtractor, async (req, res) => {
   try{
     const user = await User.findByPk(req.decodedToken.id)
     const blog = await Blog.create({...req.body, userId: user.id, date: new Date()})
+    await blog.reload({ include: { model: User, as: 'user', attributes: ['name', 'username'] } })
     return res.json(blog)
   } catch (error) {
     res.status(400).json({error})
@@ -58,7 +43,9 @@ router.post('/',tokenExtractor, async (req, res) => {
 })
 
 const blogFinder = async (req, res, next) => {
-  req.blog = await Blog.findByPk(req.params.id)
+  req.blog = await Blog.findByPk(req.params.id, {
+    include: { model: User, as: 'user', attributes: ['name', 'username'] }
+  })
   if (!req.blog) {
     return res.status(404).end()
   }

@@ -9,7 +9,7 @@ User.init({
     primaryKey: true,
     autoIncrement: true
   },
-  userName: {
+  username: {
     type: DataTypes.STRING,
     unique: true,
     allowNull: false,
@@ -25,6 +25,14 @@ User.init({
     validate: {
       notEmpty: true
     }
+  },
+  passwordHash: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  disabled: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   }
 }, {
   sequelize,

@@ -22,32 +22,40 @@ const Users = () => {
         <Table aria-label="users and their blogs">
           <TableHead sx={{ backgroundColor: 'primary.main' }}>
             <TableRow>
-              <TableCell sx={{ color: 'primary.contrastText', fontWeight: 700 }}>
+              <TableCell
+                sx={{ color: 'primary.contrastText', fontWeight: 700 }}
+              >
                 Name
               </TableCell>
-              <TableCell sx={{ color: 'primary.contrastText', fontWeight: 700 }}>
+              <TableCell
+                sx={{ color: 'primary.contrastText', fontWeight: 700 }}
+              >
                 Username
               </TableCell>
-              <TableCell sx={{ color: 'primary.contrastText', fontWeight: 700 }}>
+              <TableCell
+                sx={{ color: 'primary.contrastText', fontWeight: 700 }}
+              >
                 Blogs created
               </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {users.map((user) => (
-              <TableRow key={user.userName} hover>
+              <TableRow key={user.username || user.userName} hover>
                 <TableCell>
                   <Link
                     component={Link}
-                    to={`/users/${user.id || user.userName}`}
+                    to={`/users/${user.id || user.username || user.userName}`}
                     underline="hover"
                     sx={{ fontWeight: 600 }}
                   >
                     {user.name}
                   </Link>
                 </TableCell>
-                <TableCell>{user.userName}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{user.blogsCount}</TableCell>
+                <TableCell>{user.username || user.userName}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {user.blogsCount}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
