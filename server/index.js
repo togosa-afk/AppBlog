@@ -9,6 +9,11 @@ const loginRoute = require('./controllers/login')
 const logoutRouter = require('./controllers/logout')
 const readingListRouter = require('./controllers/reading_lists')
 
+if (process.env.NODE_ENV === 'test') {
+  const testingRouter = require('./controllers/testing')
+  app.use('/api', testingRouter)
+}
+
 app.use(express.json())
 app.use('/api/blogs', blogRouter)
 app.use('/api/users', usersRouter)

@@ -25,7 +25,7 @@ jobs:
         env:
           SECRET: ${{ secrets.SECRET }}
         run: |
-          docker compose -f docker-compose.yml run --rm -e SECRET server npm test
+          docker compose -f docker-compose.yml run --rm -e SECRET -e PORT=3001 server sh -c "npm run start:test > /tmp/app.log 2>&1 & npx wait-on http://localhost:3001 -t 30000 || { cat /tmp/app.log; exit 1; }; npm test"
           docker compose -f docker-compose.yml run --rm client npm test
       - name: Stop test containers
         if: always()
