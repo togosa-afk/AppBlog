@@ -11,15 +11,6 @@ Session.belongsTo(User)
 User.belongsToMany(Blog, { through: ReadingList, as: 'readings' })
 Blog.belongsToMany(User, { through: ReadingList, as: 'reading_users' })
 
-const syncModels = async () => {
-  return Promise.all([
-    User.sync({ alter: true }),
-    Blog.sync({ alter: true })
-  ])
-}
-
-syncModels()
-
 module.exports = {
   Blog, User,ReadingList,Session
 }

@@ -2,14 +2,18 @@ const Sequelize = require('sequelize')
 const { DATABASE_URL } = require('./config')
 
 const { Umzug, SequelizeStorage } = require('umzug')
+const databaseUrl = new URL(DATABASE_URL)
+const isLocalDatabase = ['localhost', '127.0.0.1'].includes(databaseUrl.hostname)
 
 const sequelize = new Sequelize(DATABASE_URL, {
-  dialectOptions: {
-    ssl: {
-      require: true,
-      rejectUnauthorized: false
-    }
-  },
+  dialectOptions: isLocalDatabase
+    ? {}
+    : {
+        ssl: {
+          require: true,
+          rejectUnauthorized: false
+        }
+      },
 })
 
 const runMigrations = async () => {
