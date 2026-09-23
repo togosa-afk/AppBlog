@@ -4,8 +4,8 @@
     "start": "npm --prefix server start",
     "build": "npm install --include=dev --prefix server && npm install --include=dev --prefix client && npm run build --prefix client",
     "lint": "eslint .",
-    "test": "TESTING=true node --test --test-concurrency=1 tests/api_ch3.test.js",
-    "start:test": "TESTING=true node index.js"
+    "test": "npm --prefix server test",
+    "start:test": "npm --prefix server run start:test"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -14,7 +14,6 @@
   },
   "dependencies": {
     "eslint": "^10.10.0",
-    "umzug": "^3.8.3",
     "zustand": "^5.0.15"
   }
 }

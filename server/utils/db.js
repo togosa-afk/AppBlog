@@ -1,9 +1,13 @@
 const Sequelize = require('sequelize')
+const path = require('path')
 const { DATABASE_URL } = require('./config')
-
 const { Umzug, SequelizeStorage } = require('umzug')
+
 const databaseUrl = new URL(DATABASE_URL)
-const isLocalDatabase = ['localhost', '127.0.0.1'].includes(databaseUrl.hostname)
+
+const isLocalDatabase = 
+  ['localhost', '127.0.0.1', 'host.docker.internal', 'db'].includes(databaseUrl.hostname) ||
+  process.env.NODE_ENV === 'development'
 
 const sequelize = new Sequelize(DATABASE_URL, {
   dialectOptions: isLocalDatabase
@@ -19,7 +23,7 @@ const sequelize = new Sequelize(DATABASE_URL, {
 const runMigrations = async () => {
   const migrator = new Umzug({
     migrations: {
-      glob: 'migration/*.js',
+      glob: path.join(__dirname, '../migration/*.js').replace(/\\/g, '/'),
     },
     storage: new SequelizeStorage({ sequelize, tableName: 'migrations' }),
     context: sequelize.getQueryInterface(),

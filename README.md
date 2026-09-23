@@ -28,7 +28,7 @@ npm install --prefix client
 Create `server/.env` with the following values and adjust them for your environment:
 
 ```env
-PORT=3003
+PORT=3001
 MONGODB_URI=mongodb://127.0.0.1:27017/bloglist
 TEST_MONGODB_URI=mongodb://127.0.0.1:27017/bloglist_test
 SECRET=change-this-secret
@@ -42,8 +42,8 @@ npm run dev
 ```
 
 - Frontend: `http://localhost:5173`
-- Backend: `http://localhost:3003`
-- API: `http://localhost:3003/api`
+- Backend: `http://localhost:3001`
+- API: `http://localhost:3001/api`
 
 To run them separately:
 
