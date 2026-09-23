@@ -16,7 +16,7 @@ jobs:
       - name: Build test images
         run: docker compose -f docker-compose.yml build server client
       - name: Wait for test dependencies
-        run: docker compose -f docker-compose.yml up -d --wait mongo redis
+        run: docker compose -f docker-compose.yml up -d --wait postgres
       - name: Check style in containers
         run: |
           docker compose -f docker-compose.yml run --rm server npm run lint
