@@ -6,7 +6,7 @@ const { Umzug, SequelizeStorage } = require('umzug')
 const databaseUrl = new URL(DATABASE_URL)
 
 const isLocalDatabase = 
-  ['localhost', '127.0.0.1', 'host.docker.internal', 'db'].includes(databaseUrl.hostname) ||
+  ['localhost', '127.0.0.1', 'host.docker.internal', 'db', 'postgres'].includes(databaseUrl.hostname) ||
   process.env.NODE_ENV === 'development'
 
 const sequelize = new Sequelize(DATABASE_URL, {
