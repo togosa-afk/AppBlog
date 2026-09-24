@@ -41,7 +41,7 @@ router.get('/:id', async (req, res) => {
 
 router.post('/',  async (req, res) => {
   const { name, username, userName, password } = req.body
-  const passwordHash = await bcrypt.hash(password, 10)
+  const passwordHash = password ? await bcrypt.hash(password, 10) : null
   const user = await User.create({ username: username || userName, name, passwordHash })
   return res.json(user)
 })

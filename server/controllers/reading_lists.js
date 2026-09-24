@@ -5,11 +5,20 @@ const {tokenExtractor} = require('../utils/middleware')
 router.post('/', async (req, res) => {
   const { blogId, userId } = req.body
 
+  if (!blogId || !userId) {
+    return res.status(400).json({ error: 'blogId and userId are required' })
+  }
+
   const user = await User.findByPk(userId)
   const blog = await Blog.findByPk(blogId)
 
   if (!user || !blog) {
     return res.status(404).json({ error: 'User or Blog not found' })
+  }
+
+  const existing = await ReadingList.findOne({ where: { userId, blogId } })
+  if (existing) {
+    return res.status(400).json({ error: 'Blog already in reading list' })
   }
 
   const readingListEntry = await ReadingList.create({

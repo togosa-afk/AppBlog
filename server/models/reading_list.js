@@ -31,4 +31,11 @@ ReadingList.init({
   modelName: 'reading_list'
 })
 
+ReadingList.prototype.toJSON = function () {
+  const values = { ...this.get() }
+  values.blog_id = values.blogId
+  values.user_id = values.userId
+  return values
+}
+
 module.exports = ReadingList

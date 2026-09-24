@@ -11,7 +11,7 @@
     "dev": "cross-env NODE_ENV=development node --watch index.js",
     "lint": "eslint .",
     "start:test": "cross-env NODE_ENV=test TESTING=true node index.js",
-    "test": "cross-env NODE_ENV=test TESTING=true node --test"
+    "test": "cross-env NODE_ENV=test TESTING=true node --test --test-concurrency=1"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
