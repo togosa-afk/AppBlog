@@ -1,43 +1,65 @@
-const bcrypt = require('bcrypt')  // convert password from plain text to hash 
-const usersRouter = require('express').Router() // create rout 
-const User = require('../models/user') // import user module and schema
+const router = require('express').Router()
+const bcrypt = require('bcrypt')
+const { User, Blog } = require('../models')
 
-
-//get
-usersRouter.get('/', async (request, response) => {
-  const users = await User
-    .find({}).populate('blogs', { content: 1, important: 1 })
-
-  response.json(users)
+router.get('/', async (req, res) => {
+  const users = await User.findAll({
+    include: {
+      model: Blog
+    }
+  })
+  res.json(users)
 })
 
+router.get('/:id', async (req, res) => {
 
-//post
-usersRouter.post('/', async (request, response) => {
-  const { userName, name, password } = request.body
+  const where = {}
 
-  const saltRounds = 10
-  const passwordHash = await bcrypt.hash(password, saltRounds)
+  if(req.query.read){
+    where.read = req.query.read === 'true'
+  }
 
-  const user = new User({
-    userName,
-    name,
-    passwordHash,
+  const user = await User.findByPk(req.params.id, {
+    attributes: { exclude: ['createdAt', 'updatedAt'] },
+    include: {
+      model: Blog,
+      as: 'readings',
+      attributes:{exclude: ['userId', 'createdAt', 'updatedAt']},
+      through:{
+        attributes:['read', 'id'],
+        ...(Object.keys(where).length > 0 ? { where } : {})
+      }
+    }
   })
 
-  const savedUser = await user.save()
-
-  response.status(201).json(savedUser)
-
-  console.log(response.body)
+  if (user) {
+    res.json(user)
+  } else {
+    res.status(404).end()
+  }
 })
 
-
-// delete 
-
-usersRouter.delete('/:id' , async (request, response) => {
-  await User.findByIdAndDelete(request.params.id)
-  response.status(204).end()
+router.post('/',  async (req, res) => {
+  const { name, username, userName, password } = req.body
+  const passwordHash = password ? await bcrypt.hash(password, 10) : null
+  const user = await User.create({ username: username || userName, name, passwordHash })
+  return res.json(user)
 })
 
-module.exports = usersRouter
+router.put('/:username', async (req, res) => {
+  const user = await User.findOne({
+    where: {
+      username: req.params.username
+    }
+  })
+
+  if (user) {
+    user.name = req.body.name
+    await user.save()
+    res.json(user)
+  } else {
+    res.status(404).end()
+  }
+})
+
+module.exports = router

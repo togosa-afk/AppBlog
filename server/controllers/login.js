@@ -1,29 +1,38 @@
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
-const loginRouter = require('express').Router()
-const User = require('../models/user')
+const router = require('express').Router()
+const { User,Session } = require('../models/index')
+const { SECRET } = require('../utils/config')
 
-loginRouter.post('/', async (request, response) => {
-  const { userName, password } = request.body
+router.post('/', async (req, res) => {
+  const { username, userName, password } = req.body
+  const loginUsername = username || userName
 
-  const user = await User.findOne({ userName })
-  const passwordCorrect =
-    user === null ? false : await bcrypt.compare(password, user.passwordHash)
+  const user = await User.findOne({ where: { username: loginUsername } })
+
+  const passwordCorrect = user && await bcrypt.compare(password, user.passwordHash)
 
   if (!(user && passwordCorrect)) {
-    return response.status(401).json({
-      error: 'invalid username or password'
-    })
+    return res.status(401).json({ error: 'invalid username or password' })
+  }
+
+  if (user.disabled) {
+    return res.status(401).json({ error: 'account disabled, please contact admin' })
   }
 
   const userForToken = {
-    userName: user.userName,
-    id: user._id
+    username: user.username,
+    id: user.id
   }
 
-  const token = jwt.sign(userForToken, process.env.SECRET, { expiresIn: 60 * 60 })
+  const token = jwt.sign(userForToken, SECRET)
 
-  response.status(200).send({ token, userName: user.userName, name: user.name })
+  await Session.create({
+    userId: user.id,
+    token
+  })
+
+  res.status(200).send({ token, username: user.username, name: user.name })
 })
 
-module.exports = loginRouter
+module.exports = router

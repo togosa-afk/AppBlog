@@ -1,10 +1,10 @@
 const router = require('express').Router()
-const Note = require('../models/blog')
-const User = require('../models/user')
+const { sequelize } = require('../utils/db')
 
 router.post('/reset', async (request, response) => {
-  await Note.deleteMany({})
-  await User.deleteMany({})
+  await sequelize.query(
+    'TRUNCATE TABLE blogs, users, reading_list, sessions RESTART IDENTITY CASCADE;'
+  )
 
   response.status(204).end()
 })

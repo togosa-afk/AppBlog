@@ -34,7 +34,7 @@ export const useUsers = () => {
     const blogs = useBlogs()
 
     return Object.values(blogs.reduce((usersById, blog) => {
-        const userId = blog.user?.id || blog.user?.userName || blog.author
+        const userId = blog.user?.id || blog.user?.username || blog.user?.userName || blog.author
         const existingUser = usersById[userId]
 
         usersById[userId] = existingUser
@@ -42,7 +42,7 @@ export const useUsers = () => {
             : {
                 id: blog.user?.id || blog.user?._id,
                 name: blog.user?.name || blog.author,
-                userName: blog.user?.userName || blog.author,
+                username: blog.user?.username || blog.user?.userName || blog.author,
                 blogsCount: 1
             }
 

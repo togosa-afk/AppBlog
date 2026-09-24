@@ -1,4 +1,7 @@
 const logger = require('./logger')
+const jwt = require('jsonwebtoken')
+const {SECRET} = require('../utils/config')
+const {User , Session} = require('../models')
 
 const requestLogger = (request, response, next) => {
   logger.info('Method:', request.method)
@@ -7,7 +10,35 @@ const requestLogger = (request, response, next) => {
   logger.info('---')
   next()
 }
+const tokenExtractor = async (req, res, next) => {
+  const authorization = req.get('authorization')
 
+  if (authorization && authorization.toLowerCase().startsWith('bearer ')) {
+    try {
+      const token = authorization.substring(7)
+      const decodedToken = jwt.verify(token, SECRET)
+
+      const session = await Session.findOne({ where: { token } })
+      if (!session) {
+        return res.status(401).json({ error: 'token revoked or session expired' })
+      }
+
+      const user = await User.findByPk(decodedToken.id)
+      if (!user || user.disabled) {
+        return res.status(401).json({ error: 'user disabled or not found' })
+      }
+
+      req.decodedToken = decodedToken
+      req.token = token
+    } catch {
+      return res.status(401).json({ error: 'token invalid' })
+    }
+  } else {
+    return res.status(401).json({ error: 'token missing' })
+  }
+
+  next()
+}
 const unknownEndpoint = (request, response) => {
   response.status(404).send({ error: 'unknown endpoint' })
 }
@@ -39,6 +70,10 @@ const errorHandler = (error, request, response, next) => {
   
     })
   
+  } else if (error.name === 'SequelizeValidationError'){
+    return response.status(400).json({ 
+      error: error.errors.map(e => e.message) 
+    })
   }
 
   next(error)
@@ -47,5 +82,6 @@ const errorHandler = (error, request, response, next) => {
 module.exports = {
   requestLogger,
   unknownEndpoint,
-  errorHandler
+  errorHandler,
+  tokenExtractor
 }

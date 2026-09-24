@@ -1,86 +1,74 @@
-require('dotenv').config()
-const plogRout = require('express').Router()
-const Blog = require('../models/blog')
-const User = require('../models/user')
-const jwt = require('jsonwebtoken')
+const router = require('express').Router()
+const { Blog, User } = require('../models')
+const {Op} = require('sequelize')
+const {tokenExtractor} = require('../utils/middleware')
 
-plogRout.get('/', async (request, response) => {
-  const blogs = await Blog
-    .find({}).populate('user', { userName: 1, name: 1 })
+router.get('/', async (req, res) => {
+  const where = {}
 
-  response.json(blogs)
-})
-
-
-const getTokenFrom = request => {
-  const authorization = request.get('authorization')
-  if (authorization && authorization.startsWith('Bearer ')) {
-    return authorization.replace('Bearer ', '')
-  }
-  return null
-}
-
-//post
-
-plogRout.post('/', async (request, response) => {
-  const body = request.body
-
-  const decodedToken = jwt.verify(getTokenFrom(request), process.env.SECRET)
-  if (!decodedToken.id) {
-    return response.status(401).json({ error: 'token invalid' })
-  }
-  const user = await User.findById(decodedToken.id)
-
-  if (!user) {
-    return response.status(400).json({ error: 'UserId missing or not valid' })
+  if (req.query.search) {
+    where[Op.or]=[
+    {
+      title:{ [Op.iLike] : `%${req.query.search}%` }
+    },
+    {
+      author: {[Op.iLike] : `%${req.query.search}%`}
+    }
+  ]
   }
 
-  const blog = new Blog({
-    title: body.title,
-    author: body.author,
-    url: body.url,
-    likes: body.likes || 0,
-    user: user._id
+  const blogs = await Blog.findAll({
+    attributes: { exclude: ['userId'] },
+    include: {
+      model: User,
+      as: 'user',
+      attributes: ['name', 'username']
+    },
+    where,
+    order:[['likes','DESC']]
   })
 
-  const savedBlog = await blog.save()
-  user.blogs = user.blogs.concat(savedBlog._id)
-  await savedBlog.populate('user', { userName: 1, name: 1 })
-  await user.save()
-  response.status(201).json(savedBlog)
+  res.json(blogs)
 })
 
-
-plogRout.delete('/:id', async (request, response) => {
-
-  // add auth to delete only if the user is the creator of the blog
-  const decodedToken = jwt.verify(getTokenFrom(request), process.env.SECRET)
-  if (!decodedToken.id) {
-    return response.status(401).json({ error: 'token invalid' })
+router.post('/',tokenExtractor, async (req, res) => {
+  try{
+    const user = await User.findByPk(req.decodedToken.id)
+    const blog = await Blog.create({...req.body, userId: user.id, date: new Date()})
+    await blog.reload({ include: { model: User, as: 'user', attributes: ['name', 'username'] } })
+    return res.json(blog)
+  } catch (error) {
+    res.status(400).json({error})
   }
-  const user = await User.findById(decodedToken.id)
-  if (!user) {
-    return response.status(400).json({ error: 'UserId missing or not valid' })
-  }
-
-  await Blog.findByIdAndDelete(request.params.id)
-
-  response.status(204).end()
 })
 
-
-plogRout.put('/:id', async (request, response) => {
-  const { likes } = request.body
-  const blog = await Blog.findById(request.params.id)
-  if (!blog) {
-    return response.status(404).end()
+const blogFinder = async (req, res, next) => {
+  req.blog = await Blog.findByPk(req.params.id, {
+    include: { model: User, as: 'user', attributes: ['name', 'username'] }
+  })
+  if (!req.blog) {
+    return res.status(404).end()
   }
+  next()
+}
 
-  blog.likes = likes
-
-  const savedBlog = await blog.save()
-  const updatedBlog = await savedBlog.populate('user', { userName: 1, name: 1 })
-  response.status(200).json(updatedBlog)
+router.get('/:id', blogFinder, async (req, res) => {
+  res.json(req.blog)
 })
 
-module.exports = plogRout;
+router.put('/:id', blogFinder, async (req, res) => {
+  req.blog.likes = req.body.likes
+  await req.blog.save()
+  res.json(req.blog)
+})
+
+router.delete('/:id',tokenExtractor, blogFinder, async (req, res) => {
+
+  if(req.blog.userId !== req.decodedToken.id ){
+    return res.status(401).json({ error: 'only the creator can delete this blog' })
+  }
+  await req.blog.destroy()
+  res.status(204).end()
+})
+
+module.exports = router

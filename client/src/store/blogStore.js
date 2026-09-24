@@ -22,7 +22,7 @@ const useBlogStore = create((set,get) => ({
             set(()=> ({ blogs }))
         },
         addLikes: async (id) =>{
-            const blog = get().blogs.find(b => b && (b.id || b._id) === id)
+            const blog = get().blogs.find(b => b && String(b.id || b._id) === String(id))
             if (!blog) return
 
             const updated = await blogService.update(
@@ -30,18 +30,18 @@ const useBlogStore = create((set,get) => ({
             )
             set(state => ({
                 blogs: state.blogs.map(blog =>
-                    blog && (blog.id || blog._id) === id ? updated : blog
+                    blog && String(blog.id || blog._id) === String(id) ? updated : blog
                 )
             }))
         },
         deleteBlog: async (id) =>{
-            const blog = get().blogs.find(b => b && (b.id || b._id) === id)
+            const blog = get().blogs.find(b => b && String(b.id || b._id) === String(id))
             if (!blog) return
 
             await blogService.remove(id)
 
             set(state => ({
-                blogs: state.blogs.filter(a => a && (a.id || a._id) !== id)
+                blogs: state.blogs.filter(a => a && String(a.id || a._id) !== String(id))
             }))
             get().actions.setNotification(`you removed '${blog.title}'`, 3)
         }

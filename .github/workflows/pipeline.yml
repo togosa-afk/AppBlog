@@ -1,5 +1,4 @@
 name: Deployment pipeline
-
 on:
   push:
     branches:
@@ -14,23 +13,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install dependencies
+      - name: Build test images
+        run: docker compose -f docker-compose.yml build server client
+      - name: Wait for test dependencies
+        run: docker compose -f docker-compose.yml up -d --wait postgres
+      - name: Check style in containers
         run: |
-          npm ci
-          npm ci --prefix server
-          npm ci --prefix client
-      - name: Check style
-        run: npm run lint
-
-      - name: Run Test
+          docker compose -f docker-compose.yml run --rm server npm run lint
+          docker compose -f docker-compose.yml run --rm client npm run lint
+      - name: Run tests in containers
         env:
-          TEST_MONGODB_URI: ${{ secrets.TEST_MONGODB_URI }}
           SECRET: ${{ secrets.SECRET }}
-        run: npm run test
+        run: |
+          docker compose -f docker-compose.yml run --rm -e SECRET -e PORT=3001 server sh -c "npm run start:test > /tmp/app.log 2>&1 & npx wait-on http://localhost:3001 -t 30000 || { cat /tmp/app.log; exit 1; }; npm test"
+          docker compose -f docker-compose.yml run --rm client npm test
+      - name: Stop test containers
+        if: always()
+        run: docker compose -f docker-compose.yml down -v
 
   build:
     needs: [test]
@@ -38,18 +37,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install dependencies
-        run: |
-          npm ci
-          npm ci --prefix server
-          npm ci --prefix client
-
-      - name: Build
-        run: npm run build
+      - name: Build application images
+        run: docker compose -f docker-compose.yml build server client
+      - name: Build client in its container
+        run: docker compose -f docker-compose.yml run --rm client npm run build
+      - name: Clean up build containers
+        if: always()
+        run: docker compose -f docker-compose.yml down -v
 
   deploy:
     needs: [build]
@@ -57,7 +51,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger deployment on Render
-        run: curl ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: curl --fail --show-error --silent --retry 5 --retry-delay 10 "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
   tag_release:
     needs: [deploy]
     if: ${{ github.event_name == 'push' && !contains(github.event.head_commit.message || '', '#skip') }}

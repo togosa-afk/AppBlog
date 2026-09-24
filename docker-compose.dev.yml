@@ -1,0 +1,60 @@
+services:
+  client:
+    image: client-dev
+    build:
+      context: ./client
+      dockerfile: dev.Dockerfile
+    volumes:
+      - ./client:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      - VITE_BACKEND_URL=http://localhost:8080/api
+
+  nginx:
+    image: nginx:1.25-alpine
+    ports:
+      - 8080:80
+    volumes:
+      - ./nginx.dev.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - client
+      - server
+
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: postgres
+    ports:
+      - 5432:5432
+    volumes:
+      - postgresdata:/var/lib/postgresql
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  server:
+    image: server-dev
+    build:
+      context: ./server
+      dockerfile: dev.Dockerfile
+    ports:
+      - 3001:3001
+    volumes:
+      - ./server:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      - PORT=3001
+      - DATABASE_URL=postgres://postgres:mysecretpassword@127.0.0.1:5432/postgres
+      - TEST_DATABASE_URL=postgres://postgres:mysecretpassword@127.0.0.1:5432/postgres
+      - NODE_ENV=development
+      - SECRET=supersecret
+    depends_on:
+          db:
+            condition: service_healthy
+
+volumes:
+  postgresdata:

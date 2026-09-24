@@ -16,7 +16,7 @@ const LoginForm = () => {
   const handleLogin = async (event) => {
     event.preventDefault()
     try {
-      const credentials = { userName, password }
+      const credentials = { username: userName, password }
       await login(credentials)
       navigate('/')
       setPassword('')
